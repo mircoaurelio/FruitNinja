@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Fruit Ninja</title>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+	
+}
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.js"></script>
+<script>
+var fruitArray = []; // array to hold fruit objects
+var lineArray = []; // array to hold line objects
+
+function setup() {
+createCanvas(windowWidth, windowHeight);
+}
+
+function draw() {
+background(220);
+
+
+// loop through fruitArray and move each fruit
+for (var i = 0; i < fruitArray.length; i++) {
+    fruitArray[i].move();
+    fruitArray[i].display();
+    fruitArray[i].checkCollision();
+}
+
+// loop through lineArray and display each line
+for (var i = 0; i < lineArray.length; i++) {
+    lineArray[i].display();
+    lineArray[i].checkFruit();
+}
+
+// move and display confetti
+drawConfetti();
+
+// add a new fruit at random intervals
+if (random(1) < 0.05) {
+    fruitArray.push(new Fruit());
+}
+}
+
+// when mouse is pressed, create a new line and push it into lineArray
+function mousePressed() {
+lineArray.push(new Line(mouseX, mouseY));
+}
+
+// when mouse is released, remove the last line from the array
+function mouseReleased() {
+lineArray.pop();
+}
+
+// fruit class
+function Fruit() {
+this.x = random(width); // random x position
+this.y = height; // start off screen
+this.diameter = random(40, 60); // random diameter
+this.speed = random(5, 8); // random speed
+this.angle = random(TWO_PI); // random angle
+this.gravity = 0.05; // gravity value
+this.emoji = random(['🍎', '🍊', '🍋', '🍌', '🍉', '🍇']); // random emoji
+
+
+// move fruit in a random direction with gravity applied
+this.move = function() {
+    this.x += cos(this.angle) * this.speed;
+    this.y -= sin(this.angle) * this.speed;
+    this.speed -= this.gravity;
+
+    // if fruit goes off screen, remove it from array
+    if (this.y < -this.diameter) {
+        fruitArray.splice(fruitArray.indexOf(this), 1);
+    }
+}
+
+// display fruit
+this.display = function() {
+    push();
+    textAlign(CENTER);
+    textSize(this.diameter);
+    fill(255);
+    noStroke();
+    text(this.emoji, this.x, this.y);
+    pop();
+}
+
+// check for collision with line
+this.checkCollision = function() {
+    for (var i =0; i < lineArray.length; i++) {
+if (lineArray[i].intersects(this)) {
+// if collision, create fluid confetti and remove fruit from array
+this.createConfetti();
+fruitArray.splice(fruitArray.indexOf(this), 1);
+}
+}
+}
+
+
+// create fluid confetti when fruit is cut
+this.createConfetti = function() {
+    for (var i = 0; i < 50; i++) {
+        confettiArray.push(new Confetti(this.x, this.y));
+    }
+}
+}
+
+// line class
+function Line(x, y) {
+this.x = x; // starting x position
+this.y = y; // starting y position
+this.x2 = x; // ending x position (same as starting x)
+this.y2 = y; // ending y position (same as starting y)
+this.lifespan = 2; // line will exist for 2 seconds
+
+
+// display line
+this.display = function() {
+    this.lifespan -= deltaTime / 1000; // reduce lifespan by delta time
+    if (this.lifespan <= 0) {
+        // if lifespan is over, remove line from array
+        lineArray.splice(lineArray.indexOf(this), 1);
+    } else {
+        // update ending x and y position to current mouse position
+        this.x2 = mouseX;
+        this.y2 = mouseY;
+
+        // draw line
+        stroke(255);
+        strokeWeight(4);
+        line(this.x, this.y, this.x2, this.y2);
+    }
+}
+
+// check if line intersects with a fruit
+this.intersects = function(fruit) {
+    // check if line is within the bounds of the fruit
+    if (this.x2 > fruit.x - fruit.diameter/2 &&
+        this.x2 < fruit.x + fruit.diameter/2 &&
+        this.y2 > fruit.y - fruit.diameter/2 &&
+        this.y2 < fruit.y + fruit.diameter/2) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// check if line intersects with any fruit in fruitArray
+this.checkFruit = function() {
+    for (var i = 0; i < fruitArray.length; i++) {
+        if (this.intersects(fruitArray[i])) {
+            // if collision, create fluid confetti and remove fruit from array
+            fruitArray[i].createConfetti();
+            fruitArray.splice(i, 1);
+        }
+    }
+}
+}
+
+// confetti class
+function Confetti(x, y) {
+this.x = x; // starting x position
+this.y = y; // starting y position
+this.size = random(2, 5); // random size
+this.angle = random(TWO_PI); // random angle
+this.speed = random(1, 3); // random speed
+this.lifespan = 255; // confetti will exist for 255 frames
+
+
+// move confetti in a random direction
+this.move = function() {
+    this.x += cos(this.angle) * this.speed;
+this.y -= sin(this.angle) * this.speed;
+this.lifespan--; // decrease lifespan by 1 each frame
+}
+
+
+// display confetti
+this.display = function() {
+    // fade out confetti as it gets older
+    fill(255, this.lifespan);
+    noStroke();
+    ellipse(this.x, this.y, this.size);
+}
+}
+
+var confettiArray = []; // array to hold confetti objects
+
+// move and display confetti
+function drawConfetti() {
+for (var i = 0; i < confettiArray.length; i++) {
+confettiArray[i].move();
+confettiArray[i].display();
+
+
+    // if confetti lifespan is over, remove it from array
+    if (confettiArray[i].lifespan <= 0) {
+        confettiArray.splice(i, 1);
+    }
+}
+}
+
+</script>
+</body>
+</html>
